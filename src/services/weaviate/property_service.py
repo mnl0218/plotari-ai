@@ -41,7 +41,7 @@ class WeaviatePropertyService(WeaviatePropertyInterface):
                     "zpid", "address", "city", "state", "zipcode",
                     "price", "bedrooms", "bathrooms", "living_area", 
                     "year_built", "lot_size", "description", "features",
-                    "neighborhood_text", "geo", "search_corpus"
+                    "neighborhood_text", "property_type", "geo", "search_corpus"
                 ]
             )
             
@@ -96,7 +96,7 @@ class WeaviatePropertyService(WeaviatePropertyInterface):
                     "zpid", "address", "city", "state", "zipcode",
                     "price", "bedrooms", "bathrooms", "living_area", 
                     "year_built", "lot_size", "description", "features",
-                    "neighborhood_text", "geo", "search_corpus"
+                    "neighborhood_text", "property_type", "geo", "search_corpus"
                 ]
             )
             

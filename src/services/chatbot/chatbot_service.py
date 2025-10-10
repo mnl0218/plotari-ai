@@ -67,6 +67,7 @@ class ChatbotService:
             # Get or create conversation session
             user_id = request.user_id
             session_id = request.session_id
+
             
             # First try to get existing conversation
             conversation = self.conversation_manager.get_conversation(user_id, session_id)

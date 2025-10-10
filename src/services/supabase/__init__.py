@@ -6,11 +6,13 @@ from .conversation_repository import SupabaseConversationRepository
 from .conversation_analytics_service import ConversationAnalyticsService
 from .conversation_cleanup_service import ConversationCleanupService
 from .search_log_service import SearchLogService
+from .property_service import SupabasePropertyService
 
 __all__ = [
     'SupabaseConversationService',
     'SupabaseConversationRepository',
     'ConversationAnalyticsService',
     'ConversationCleanupService',
-    'SearchLogService'
+    'SearchLogService',
+    'SupabasePropertyService'
 ]

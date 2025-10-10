@@ -111,3 +111,61 @@ class WeaviatePOIService(WeaviatePOIInterface):
         except Exception as e:
             logger.error(f"Error converting POI data: {e}")
             raise
+    
+    def insert_pois_batch(self, pois: List[POI]) -> int:
+        """
+        Inserts a batch of POIs into Weaviate
+        
+        Args:
+            pois: List of POI objects to insert
+            
+        Returns:
+            Number of POIs successfully inserted
+        """
+        try:
+            if not pois:
+                logger.warning("No POIs to insert")
+                return 0
+            
+            self.connection_service.ensure_connection()
+            poi_col = self.connection_service.client.collections.get("POI")
+            
+            inserted_count = 0
+            failed_count = 0
+            
+            # Insert POIs in batch
+            with poi_col.batch.dynamic() as batch:
+                for poi in pois:
+                    try:
+                        # Convert POI model to dictionary for Weaviate
+                        poi_data = {
+                            "name": poi.name,
+                            "category": poi.category,
+                            "rating": poi.rating,
+                            "source": poi.source,
+                            "geo": {
+                                "latitude": poi.geo.latitude,
+                                "longitude": poi.geo.longitude
+                            },
+                            "search_corpus": poi.search_corpus
+                        }
+                        
+                        # Add to batch
+                        batch.add_object(properties=poi_data)
+                        inserted_count += 1
+                        
+                    except Exception as e:
+                        logger.error(f"Error inserting POI '{poi.name}': {e}")
+                        failed_count += 1
+                        continue
+            
+            logger.info(
+                f"POI batch insert completed: {inserted_count} inserted, "
+                f"{failed_count} failed"
+            )
+            
+            return inserted_count
+            
+        except Exception as e:
+            logger.error(f"Error in batch insert of POIs: {e}")
+            raise

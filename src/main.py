@@ -11,7 +11,17 @@ import uvicorn
 import os
 
 from src.config.settings import settings
-from src.api.endpoints import router
+from src.api.routes import (
+    chat_router,
+    properties_router,
+    conversations_router,
+    analytics_router,
+    sync_router,
+    cache_router,
+    health_router,
+    deletion_router,
+    enrichment_router
+)
 
 # Configure logging
 def setup_logging():
@@ -82,7 +92,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="Plotari Chatbot API",
-    description="Minimal REST API for Plotari chatbot with Weaviate and OpenAI. Endpoints: POST /chat, POST /search, GET /property/{id}, GET /property/{id}/pois, POST /compare",
+    description="Modular REST API for Plotari chatbot with Weaviate and OpenAI. Organized by service: Chat, Properties, Conversations, Analytics, Sync, Cache, and Health.",
     version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -99,8 +109,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(router, prefix="/api")
+# Include routers - Modular design
+app.include_router(chat_router, prefix="/api")
+app.include_router(properties_router, prefix="/api")
+app.include_router(conversations_router, prefix="/api")
+app.include_router(analytics_router, prefix="/api")
+app.include_router(sync_router, prefix="/api")
+app.include_router(deletion_router, prefix="/api")
+app.include_router(cache_router, prefix="/api")
+app.include_router(enrichment_router, prefix="/api")
+app.include_router(health_router, prefix="/api")
 
 # Global exception handling
 @app.exception_handler(Exception)
@@ -119,19 +137,49 @@ async def global_exception_handler(request, exc):
 async def root():
     """Root endpoint"""
     return {
-        "message": "Plotari Chatbot API - Minimal REST Design",
+        "message": "Plotari Chatbot API - Modular REST Design",
         "version": "2.0.0",
         "status": "running",
-        "endpoints": {
-            "chat": "POST /api/chat - Chat with intent detection",
-            "search": "POST /api/search - Property search with filters",
-            "property": "GET /api/property/{id} - Detail + recommendations",
-            "pois": "GET /api/property/{id}/pois - POIs near property",
-            "compare": "POST /api/compare - Property comparison",
-            "health": "GET /api/health - Service status"
+        "services": {
+            "chat": {
+                "endpoints": ["POST /api/chat", "POST /api/chat/message"],
+                "description": "Chat with intent detection and SSE streaming"
+            },
+            "properties": {
+                "endpoints": ["POST /api/search", "GET /api/property/{id}", "GET /api/property/{id}/pois", "POST /api/compare"],
+                "description": "Property search, details, POIs, and comparison"
+            },
+            "conversations": {
+                "endpoints": ["GET /api/conversation/{user_id}/{session_id}/history", "DELETE /api/conversation/{user_id}/{session_id}", "GET /api/user/{user_id}/conversations"],
+                "description": "Conversation history and management"
+            },
+            "analytics": {
+                "endpoints": ["GET /api/analytics/search-logs", "GET /api/analytics/search-stats", "DELETE /api/analytics/search-logs/cleanup"],
+                "description": "Search analytics and logs"
+            },
+            "sync": {
+                "endpoints": ["POST /api/sync/properties/full", "POST /api/sync/properties/incremental", "GET /api/sync/properties/status"],
+                "description": "Property synchronization between Supabase and Weaviate"
+            },
+            "deletion": {
+                "endpoints": ["DELETE /api/delete/properties/all", "DELETE /api/delete/properties/by-date", "DELETE /api/delete/properties/{zpid}", "DELETE /api/delete/properties/bulk", "GET /api/delete/properties/status"],
+                "description": "Weaviate data deletion operations"
+            },
+            "cache": {
+                "endpoints": ["GET /api/cache/info", "DELETE /api/cache/clear"],
+                "description": "Cache management and information"
+            },
+            "health": {
+                "endpoints": ["GET /api/health"],
+                "description": "Service health status"
+            },
+            "enrichment": {
+                "endpoints": ["POST /api/enrich-pois"],
+                "description": "Enrich properties with POIs from OpenStreetMap"
+            }
         },
         "docs": "/docs",
-        "health": "/api/health"
+        "redoc": "/redoc"
     }
 
 @app.get("/info")
@@ -140,15 +188,22 @@ async def get_info():
     return {
         "service": "Plotari Chatbot API",
         "version": "2.0.0",
-        "description": "Minimal REST API for Plotari chatbot with Weaviate and OpenAI",
-        "design": "Minimal REST with 5 main endpoints",
-        "endpoints": {
-            "POST /chat": "Chat with intent detection → routes to /search, /pois, /property internally",
-            "POST /search": "Property search with filters (price, beds, baths, radius, lat/lon)",
-            "GET /property/{id}": "Property detail + similar recommendations",
-            "GET /property/{id}/pois": "POIs near property (category, radius)",
-            "POST /compare": "Property comparison with table and pros/cons",
-            "GET /health": "Service status"
+        "description": "Modular REST API for Plotari chatbot with Weaviate and OpenAI",
+        "design": "Modular REST design organized by service domains",
+        "architecture": {
+            "chat_service": "Real-time chat with SSE streaming and intent detection",
+            "property_service": "Property search, details, POIs, and comparison",
+            "conversation_service": "User conversation history and session management",
+            "analytics_service": "Search analytics and activity logs",
+            "sync_service": "Data synchronization between Supabase and Weaviate",
+            "deletion_service": "Weaviate data deletion operations",
+            "cache_service": "Cache management and optimization",
+            "health_service": "System health monitoring"
+        },
+        "total_endpoints": 23,
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc"
         },
         "environment": os.getenv("ENVIRONMENT", "development")
     }

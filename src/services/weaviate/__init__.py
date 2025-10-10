@@ -20,6 +20,7 @@ from .search_service import WeaviateSearchService
 from .property_service import WeaviatePropertyService
 from .poi_service import WeaviatePOIService
 from .comparison_service import WeaviateComparisonService
+from .deletion_service import WeaviateDeletionService
 
 __all__ = [
     # Main service
@@ -41,5 +42,6 @@ __all__ = [
     'WeaviateSearchService',
     'WeaviatePropertyService',
     'WeaviatePOIService',
-    'WeaviateComparisonService'
+    'WeaviateComparisonService',
+    'WeaviateDeletionService'
 ]

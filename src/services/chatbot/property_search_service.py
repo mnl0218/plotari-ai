@@ -24,7 +24,11 @@ class PropertySearchService(PropertySearchInterface):
                 return []
             
             # Special mode: search properties near POIs
-            if search_intent.get("search_mode") == "near_pois":
+            # Check both at root level and inside filters for backwards compatibility
+            filters = search_intent.get("filters", {})
+            search_mode = search_intent.get("search_mode") or filters.get("search_mode")
+            
+            if search_mode == "near_pois":
                 return self.search_properties_near_pois(search_intent)
             
             # Build search request with clean values
@@ -41,6 +45,7 @@ class PropertySearchService(PropertySearchInterface):
                 limit=10,
                 city=clean_value(filters.get("city")),
                 state=clean_value(filters.get("state")),
+                property_type=clean_value(filters.get("property_type")),
                 min_price=filters.get("min_price"),
                 max_price=filters.get("max_price"),
                 min_bedrooms=filters.get("min_bedrooms"),
