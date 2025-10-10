@@ -112,3 +112,19 @@ dmypy.json
 data/
 models/
 checkpoints/
+
+# Backup files
+backup/
+
+# Context files
+docs/readme.md
+docs/architecture.md
+docs/api-endpoints.md
+docs/models.md
+docs/services-chatbot.md
+docs/services-openai.md
+docs/services-supabase.md
+docs/services-weaviate.md
+docs/services-sync.md
+docs/quick-reference.md
+docs/configuration.md

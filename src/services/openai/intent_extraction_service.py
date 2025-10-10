@@ -82,13 +82,15 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         1. Query type (search, detail, comparison, POIs)
         2. Location (city, state - only if explicitly mentioned)
         3. Features (bedrooms, bathrooms, area, price)
-        4. Keywords for search
+        4. Property type (house, condo, apartment, townhouse, etc.)
+        5. Keywords for search
         
         IMPORTANT:
         - For the "state" field: only include if explicitly mentioned (e.g.: "in California", "CA", "Texas"). If not mentioned, use null.
         - For the "city" field: extract the name of the mentioned city
         - If only a city is mentioned without state, leave state as null
         - Bedroom numbers: look for words like "habitaciones", "recamaras", "bedrooms", "hab", "bedroom", "bed"
+        - Property type: look for words like "condo", "condos", "house", "houses", "apartment", "apartments", "townhouse", etc.
         - For comparisons: detect when multiple properties or IDs are mentioned
         - For details: detect when specific information about a property is requested
         - For POIs: detect when searching for restaurants, schools, hospitals, etc.
@@ -101,11 +103,14 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         Respond ONLY in valid JSON format with the following keys:
         - type: query type ("property_search", "property_detail", "poi_search", "property_compare")
         - query: optimized query for search
-        - filters: object with specific filters (city, state, min_price, max_price, min_bedrooms, max_bedrooms, min_bathrooms, max_bathrooms, property_id, property_ids for comparison, poi_category, poi_radius, search_mode)
+        - filters: object with specific filters (city, state, property_type, min_price, max_price, min_bedrooms, max_bedrooms, min_bathrooms, max_bathrooms, property_id, property_ids for comparison, poi_category, poi_radius, search_mode)
         
         Examples:
         User: "Looking for a 2 bedroom house in Crescent City"
-        Response: {"type": "property_search", "query": "2 bedroom house Crescent City", "filters": {"city": "Crescent City", "state": null, "min_bedrooms": 2}}
+        Response: {"type": "property_search", "query": "2 bedroom house Crescent City", "filters": {"city": "Crescent City", "state": null, "min_bedrooms": 2, "property_type": "House"}}
+        
+        User: "Show condos between 200k and 300k"
+        Response: {"type": "property_search", "query": "condos 200k-300k", "filters": {"property_type": "Condo", "min_price": 200000, "max_price": 300000}}
         
         User: "property near to parks" or "propiedades cerca de parques"
         Response: {"type": "property_search", "query": "property near parks", "filters": {"poi_category": "park", "poi_radius": 1500, "search_mode": "near_pois"}}

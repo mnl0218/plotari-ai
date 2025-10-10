@@ -72,6 +72,18 @@ class WeaviateService:
         """Gets all POIs of a specific category (for internal use)"""
         return self.poi_service.get_pois_by_category(category)
     
+    def insert_pois_batch(self, pois: List[POI]) -> int:
+        """
+        Inserts a batch of POIs into Weaviate
+        
+        Args:
+            pois: List of POI objects to insert
+            
+        Returns:
+            Number of POIs successfully inserted
+        """
+        return self.poi_service.insert_pois_batch(pois)
+    
     def close(self) -> None:
         """Closes the connection with Weaviate"""
         self.connection_service.close()

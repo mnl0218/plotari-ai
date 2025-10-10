@@ -481,6 +481,7 @@ class ChatbotService:
                 limit=10,
                 city=clean_value(filters.get("city")),
                 state=clean_value(filters.get("state")),
+                property_type=clean_value(filters.get("property_type")),
                 min_price=filters.get("min_price"),
                 max_price=filters.get("max_price"),
                 min_bedrooms=filters.get("min_bedrooms"),

@@ -69,19 +69,19 @@ class OpenAISummaryService:
     def _build_summary_prompt(self) -> str:
         """Builds the system prompt for summary generation"""
         return """
-You are an expert at creating concise, informative summaries of Plotari conversations.
+            You are an expert at creating concise, informative summaries of Plotari conversations.
 
-Your task is to create a brief summary (1-2 sentences) of what the user is looking for in their Plotari search.
+            Your task is to create a brief summary (1-2 sentences) of what the user is looking for in their Plotari search.
 
-Focus on:
-- Property type (house, apartment, condo, etc.)
-- Location preferences (city, neighborhood, area)
-- Key requirements (bedrooms, bathrooms, price range, features)
-- Any specific needs or preferences mentioned
+            Focus on:
+            - Property type (house, apartment, condo, etc.)
+            - Location preferences (city, neighborhood, area)
+            - Key requirements (bedrooms, bathrooms, price range, features)
+            - Any specific needs or preferences mentioned
 
-Keep the summary professional, clear, and under 100 words.
-Write in English.
-"""
+            Keep the summary professional, clear, and under 100 words.
+            Write in English.
+            """
     
     def _format_context_for_summary(self, context: Dict[str, Any]) -> str:
         """Formats conversation context for summary generation"""
