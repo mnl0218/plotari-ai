@@ -129,3 +129,6 @@ docs/services-sync.md
 docs/quick-reference.md
 docs/configuration.md
 docs/services-osm.md
+
+# Tests Notebooks
+*.ipynb
