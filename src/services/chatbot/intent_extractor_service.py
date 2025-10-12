@@ -47,9 +47,34 @@ class IntentExtractorService(IntentExtractorInterface):
     def _extract_search_intent_fallback(self, message: str, context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Fallback method to extract intent based on rules"""
         try:
-            message_lower = message.lower()
+            message_lower = message.lower().strip()
             
-            # Detect query type using keywords
+            # FIRST: Detect general conversation (greetings, small talk)
+            greeting_keywords = ["hello", "hi", "hey", "hola", "buenos días", "good morning", "good afternoon", "good evening", "buenas tardes", "buenas noches"]
+            question_keywords = ["how are you", "cómo estás", "what can you do", "qué puedes hacer", "help", "ayuda", "what do you do"]
+            thanks_keywords = ["thank", "thanks", "gracias", "appreciate"]
+            goodbye_keywords = ["bye", "goodbye", "see you", "adiós", "hasta luego", "chao"]
+            
+            # Check if it's general conversation
+            is_general_conversation = (
+                any(greeting in message_lower for greeting in greeting_keywords) or
+                any(question in message_lower for question in question_keywords) or
+                any(thanks in message_lower for thanks in thanks_keywords) or
+                any(goodbye in message_lower for goodbye in goodbye_keywords)
+            )
+            
+            # If general conversation and NO property-related terms, classify as general_conversation
+            property_keywords = ["house", "home", "property", "condo", "apartment", "bedroom", "bathroom", "price", "buy", "rent", "casa", "propiedad", "apartamento", "habitación"]
+            has_property_terms = any(keyword in message_lower for keyword in property_keywords)
+            
+            if is_general_conversation and not has_property_terms:
+                return {
+                    "type": "general_conversation",
+                    "query": message,
+                    "filters": {}
+                }
+            
+            # Then detect query type using keywords
             if any(word in message_lower for word in ["comparar", "compare", "vs", "versus"]):
                 return self._extract_compare_intent(message, context)
             elif any(word in message_lower for word in ["detalle", "details", "info", "información"]):
@@ -164,7 +189,7 @@ class IntentExtractorService(IntentExtractorInterface):
                     return False
             
             # Verify that the type is valid
-            valid_types = ["property_search", "property_detail", "poi_search", "property_compare"]
+            valid_types = ["property_search", "property_detail", "poi_search", "property_compare", "general_conversation"]
             if intent["type"] not in valid_types:
                 return False
             
