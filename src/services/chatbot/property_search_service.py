@@ -45,6 +45,7 @@ class PropertySearchService(PropertySearchInterface):
                 limit=10,
                 city=clean_value(filters.get("city")),
                 state=clean_value(filters.get("state")),
+                neighborhood=clean_value(filters.get("neighborhood")),
                 property_type=clean_value(filters.get("property_type")),
                 min_price=filters.get("min_price"),
                 max_price=filters.get("max_price"),
@@ -74,6 +75,24 @@ class PropertySearchService(PropertySearchInterface):
             if not self.weaviate_service:
                 return []
             
+            # Helper function to clean empty string values
+            def clean_value(value):
+                if isinstance(value, str) and not value.strip():
+                    return None
+                return value
+            
+            # Extract all filters that should be applied to property search
+            city = clean_value(filters.get("city"))
+            state = clean_value(filters.get("state"))
+            neighborhood = clean_value(filters.get("neighborhood"))
+            property_type = clean_value(filters.get("property_type"))
+            min_price = filters.get("min_price")
+            max_price = filters.get("max_price")
+            min_bedrooms = filters.get("min_bedrooms")
+            max_bedrooms = filters.get("max_bedrooms")
+            min_bathrooms = filters.get("min_bathrooms")
+            max_bathrooms = filters.get("max_bathrooms")
+            
             # First search all POIs of the specified category
             pois = self.weaviate_service._get_pois_by_category(poi_category)
             
@@ -81,17 +100,32 @@ class PropertySearchService(PropertySearchInterface):
                 logger.info(f"No POIs found for category: {poi_category}")
                 return []
             
+            # Filter POIs by city if specified
+            if city:
+                # Note: POIs don't have a city field, so we'll need to filter properties instead
+                logger.info(f"City filter '{city}' will be applied to properties, not POIs")
+            
             # Search properties near each POI
             all_properties = []
             for poi in pois:
                 if hasattr(poi.geo, 'latitude') and hasattr(poi.geo, 'longitude'):
-                    # Search properties within radius of POI
+                    # Search properties within radius of POI with ALL filters applied
                     search_request = PropertySearchRequest(
                         query=search_intent["query"],
                         latitude=poi.geo.latitude,
                         longitude=poi.geo.longitude,
                         radius=poi_radius,
-                        limit=5  # Maximum 5 per POI
+                        limit=5,  # Maximum 5 per POI
+                        city=city,
+                        state=state,
+                        neighborhood=neighborhood,
+                        property_type=property_type,
+                        min_price=min_price,
+                        max_price=max_price,
+                        min_bedrooms=min_bedrooms,
+                        max_bedrooms=max_bedrooms,
+                        min_bathrooms=min_bathrooms,
+                        max_bathrooms=max_bathrooms
                     )
                     
                     search_response = self.weaviate_service.search_properties(search_request)

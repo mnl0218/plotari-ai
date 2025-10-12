@@ -99,11 +99,13 @@ class WeaviateSearchService(WeaviateSearchInterface):
         if search_request.max_bathrooms is not None:
             filters.append(Filter.by_property("bathrooms").less_or_equal(search_request.max_bathrooms))
         
-        # City and state filters
+        # City, state and neighborhood filters
         if search_request.city:
             filters.append(Filter.by_property("city").equal(search_request.city))
         if search_request.state:
             filters.append(Filter.by_property("state").equal(search_request.state))
+        if search_request.neighborhood:
+            filters.append(Filter.by_property("neighborhood_text").equal(search_request.neighborhood))
         
         # Property type filter
         if search_request.property_type:
@@ -198,6 +200,8 @@ class WeaviateSearchService(WeaviateSearchInterface):
             filters_applied["city"] = search_request.city
         if search_request.state:
             filters_applied["state"] = search_request.state
+        if search_request.neighborhood:
+            filters_applied["neighborhood"] = search_request.neighborhood
         if search_request.property_type:
             filters_applied["property_type"] = search_request.property_type
         if search_request.latitude and search_request.longitude and search_request.radius:
