@@ -1,15 +1,32 @@
 """
 Property synchronization endpoints
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body
 import logging
 from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field
 from src.services.sync import PropertySyncService
 from src.api.dependencies import get_sync_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sync", tags=["Synchronization"])
+
+
+class IncrementalSyncRequest(BaseModel):
+    """Request model for incremental property synchronization"""
+    since: str = Field(
+        ..., 
+        description="ISO format datetime string (e.g., '2024-01-01T00:00:00' or '2024-01-01T00:00:00Z')",
+        examples=["2024-01-01T00:00:00", "2024-01-01T00:00:00Z"]
+    )
+    batch_size: Optional[int] = Field(
+        default=100,
+        description="Number of properties to process in each batch",
+        ge=1,
+        le=1000
+    )
 
 @router.post("/properties/full")
 async def sync_all_properties(
@@ -41,23 +58,23 @@ async def sync_all_properties(
 
 @router.post("/properties/incremental")
 async def sync_properties_incremental(
-    since: str,  # ISO format datetime string
-    batch_size: int = 100,
+    request: IncrementalSyncRequest,
     sync_service: PropertySyncService = Depends(get_sync_service)
 ):
     """
     Synchronize properties updated since a specific datetime
     
     Args:
-        since: ISO format datetime string (e.g., "2024-01-01T00:00:00")
-        batch_size: Number of properties to process in each batch (default: 100)
+        request: Request body containing:
+            - since: ISO format datetime string (e.g., "2024-01-01T00:00:00")
+            - batch_size: Number of properties to process in each batch (default: 100)
     """
     try:
         # Parse datetime string
-        since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+        since_dt = datetime.fromisoformat(request.since.replace('Z', '+00:00'))
         
         logger.info(f"Starting incremental property synchronization since: {since_dt}")
-        result = sync_service.sync_properties_updated_since(since_dt, batch_size=batch_size)
+        result = sync_service.sync_properties_updated_since(since_dt, batch_size=request.batch_size)
         
         return {
             "success": True,
