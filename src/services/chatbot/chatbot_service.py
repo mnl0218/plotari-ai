@@ -114,7 +114,10 @@ class ChatbotService:
             pois_found = []
             search_start_time = time.time()
             
-            if search_intent["type"] == "property_search":
+            # Skip property/POI searches for general conversation
+            if search_intent["type"] == "general_conversation":
+                logger.info("General conversation detected - skipping property search")
+            elif search_intent["type"] == "property_search":
                 properties_found = self.property_search.search_properties(search_intent)
             elif search_intent["type"] == "property_detail":
                 property_detail = self.property_search.get_property_detail(search_intent)
@@ -128,7 +131,7 @@ class ChatbotService:
             # Calculate search response time
             search_response_time = int((time.time() - search_start_time) * 1000)
             
-            # Log search operation if it's a search type
+            # Log search operation if it's a search type (but not general conversation)
             if search_intent["type"] in ["property_search", "property_detail", "poi_search", "property_compare"]:
                 try:
                     # Get conversation ID from the conversation data

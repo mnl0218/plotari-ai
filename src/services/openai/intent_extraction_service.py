@@ -78,8 +78,24 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         """Builds the intent extraction prompt"""
         return """
         You are an assistant specialized in extracting Plotari property search information.
-        Analyze the user's message and extract:
-        1. Query type (search, detail, comparison, POIs)
+        
+        FIRST PRIORITY: Detect if this is general conversation (NOT a property search):
+        
+        Use type "general_conversation" for:
+        - Greetings: "hello", "hi", "hey", "good morning", "hola", "buenos días", etc.
+        - Questions about service: "what can you do?", "help me", "how does this work?", etc.
+        - Social interactions: "how are you?", "thank you", "thanks", "goodbye", "bye", etc.
+        
+        Use property search types ONLY when the user explicitly mentions:
+        - Properties (house, condo, apartment, property)
+        - Locations for properties (in Miami, San Diego condos, etc.)
+        - Property features (bedrooms, bathrooms, price, etc.)
+        - Specific property IDs or comparisons
+        
+        If NO property-related terms are mentioned, use "general_conversation".
+        
+        Then analyze and extract:
+        1. Query type (search, detail, comparison, POIs, or general conversation)
         2. Location (city, state, neighborhood - only if explicitly mentioned)
         3. Features (bedrooms, bathrooms, area, price)
         4. Property type (house, condo, apartment, townhouse, etc.)
@@ -106,11 +122,23 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         - For property searches near POIs, include "search_mode": "near_pois" in filters
         
         Respond ONLY in valid JSON format with the following keys:
-        - type: query type ("property_search", "property_detail", "poi_search", "property_compare")
-        - query: optimized query for search
+        - type: query type ("property_search", "property_detail", "poi_search", "property_compare", "general_conversation")
+        - query: optimized query for search (or the original message for general_conversation)
         - filters: object with specific filters (city, state, neighborhood, property_type, min_price, max_price, min_bedrooms, max_bedrooms, min_bathrooms, max_bathrooms, property_id, property_ids for comparison, poi_category, poi_radius, search_mode)
         
         Examples:
+        User: "Hello"
+        Response: {"type": "general_conversation", "query": "Hello", "filters": {}}
+        
+        User: "Hi, how are you?"
+        Response: {"type": "general_conversation", "query": "Hi, how are you?", "filters": {}}
+        
+        User: "What can you help me with?"
+        Response: {"type": "general_conversation", "query": "What can you help me with?", "filters": {}}
+        
+        User: "Thanks for your help!"
+        Response: {"type": "general_conversation", "query": "Thanks for your help!", "filters": {}}
+        
         User: "Looking for a 2 bedroom house in Crescent City"
         Response: {"type": "property_search", "query": "2 bedroom house Crescent City", "filters": {"city": "Crescent City", "state": null, "min_bedrooms": 2, "property_type": "House"}}
         
@@ -147,7 +175,7 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
                 intent["filters"] = {}
             
             # Validate type
-            valid_types = ["property_search", "property_detail", "poi_search", "property_compare"]
+            valid_types = ["property_search", "property_detail", "poi_search", "property_compare", "general_conversation"]
             if intent["type"] not in valid_types:
                 intent["type"] = "property_search"
             

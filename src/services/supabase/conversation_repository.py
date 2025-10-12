@@ -35,7 +35,7 @@ class SupabaseConversationRepository:
             Conversation data or None if not found
         """
         try:
-            response = self.supabase.table("chatbot_conversations").select("*").eq("user_id", user_id).eq("session_id", session_id).eq("is_active", True).execute()
+            response = self.supabase.table("chatbot_conversations").select("*").eq("user_id", user_id).eq("session_id", session_id).execute()
             
             if response.data:
                 return response.data[0]
@@ -161,7 +161,7 @@ class SupabaseConversationRepository:
             
             query = self.supabase.table("chatbot_conversations").select(
                 "user_id", "session_id", "created_at", "last_activity", "conversation_data"
-            ).eq("is_active", True)
+            )
             
             # Apply filters if provided
             if filters:
@@ -230,7 +230,7 @@ class SupabaseConversationRepository:
             Conversation data or None if not found
         """
         try:
-            response = self.supabase.table("chatbot_conversations").select("*").eq("id", conversation_id).eq("is_active", True).execute()
+            response = self.supabase.table("chatbot_conversations").select("*").eq("id", conversation_id).execute()
             
             if response.data:
                 return response.data[0]
