@@ -1,6 +1,6 @@
-# Plotari Chatbot Backend
+# Plotari AI Backend
 
-A robust and scalable backend for a Plotari chatbot that uses **Weaviate** as a vector database, **OpenAI** for natural language processing, and **Supabase** for conversation persistence. The system enables intelligent property searches through natural conversation with a **comprehensive REST API** featuring multiple specialized endpoints.
+A robust and scalable backend for the Plotari AI real estate chatbot that uses **Weaviate** as a vector database, **OpenAI** for natural language processing, **Supabase** for data persistence, and **OpenStreetMap** for POI enrichment. The system enables intelligent property searches through natural conversation with a **comprehensive REST API** featuring multiple specialized endpoints.
 
 ## Key Features
 
@@ -8,8 +8,11 @@ A robust and scalable backend for a Plotari chatbot that uses **Weaviate** as a 
 - **Hybrid Search**: Combines semantic (vector) and textual (BM25) search in Weaviate
 - **Vector Database**: Weaviate for intelligent property and POI searches
 - **Advanced AI**: OpenAI GPT for natural language processing and response generation
-- **Persistent Storage**: Supabase for conversation and analytics data
+- **Persistent Storage**: Supabase for conversation, analytics, and property data
 - **Real-time Chat**: Server-Sent Events (SSE) support for streaming responses
+- **POI Enrichment**: OpenStreetMap integration for location-based services
+- **Data Synchronization**: Automated sync between Supabase and Weaviate
+- **Deletion Operations**: Comprehensive data deletion capabilities
 - **Scalable**: Modular service-oriented architecture with dependency injection
 - **Analytics**: Search logging and conversation analytics
 - **Robust**: Comprehensive error handling, validations, and structured logging
@@ -17,7 +20,7 @@ A robust and scalable backend for a Plotari chatbot that uses **Weaviate** as a 
 ## Project Architecture
 
 ```
-chatbot-backend/
+plotari-ai/
 ├── src/
 │   ├── config/              # Centralized configuration
 │   │   ├── __init__.py
@@ -41,6 +44,7 @@ chatbot-backend/
 │   │   │   ├── chat_service.py                # Chat completion
 │   │   │   ├── intent_extraction_service.py   # Intent extraction
 │   │   │   ├── property_response_service.py   # Property responses
+│   │   │   ├── summary_service.py             # Summary generation
 │   │   │   └── model_service.py               # Model management
 │   │   ├── weaviate/        # Weaviate specialized services
 │   │   │   ├── weaviate_service.py           # Main orchestrator
@@ -50,30 +54,51 @@ chatbot-backend/
 │   │   │   ├── search_service.py             # Core search operations
 │   │   │   ├── property_service.py           # Property operations
 │   │   │   ├── poi_service.py                # POI operations
+│   │   │   ├── deletion_service.py           # Deletion operations
 │   │   │   └── comparison_service.py         # Property comparison
-│   │   └── supabase/        # Supabase specialized services
-│   │       ├── conversation_service.py       # Conversation persistence
-│   │       ├── conversation_repository.py    # Data access layer
-│   │       ├── conversation_analytics_service.py # Analytics
-│   │       ├── conversation_cleanup_service.py   # Cleanup operations
-│   │       └── search_log_service.py         # Search logging
+│   │   ├── supabase/        # Supabase specialized services
+│   │   │   ├── conversation_service.py       # Conversation persistence
+│   │   │   ├── conversation_repository.py    # Data access layer
+│   │   │   ├── conversation_analytics_service.py # Analytics
+│   │   │   ├── conversation_cleanup_service.py   # Cleanup operations
+│   │   │   ├── property_service.py           # Property operations
+│   │   │   └── search_log_service.py         # Search logging
+│   │   ├── osm/             # OpenStreetMap services
+│   │   │   ├── osm_service.py                # Main orchestrator
+│   │   │   ├── connection_service.py         # Connection management
+│   │   │   └── poi_service.py                # POI search operations
+│   │   ├── enrichment/      # Enrichment services
+│   │   │   └── poi_enrichment_service.py     # POI enrichment
+│   │   └── sync/            # Synchronization services
+│   │       └── property_sync_service.py      # Property sync
 │   ├── api/                 # API endpoints
-│   │   ├── __init__.py
-│   │   └── endpoints.py        # REST endpoints with FastAPI
+│   │   ├── routes/          # Route modules
+│   │   │   ├── analytics.py    # Analytics endpoints
+│   │   │   ├── cache.py        # Cache endpoints
+│   │   │   ├── chat.py         # Chat endpoints
+│   │   │   ├── conversations.py # Conversation endpoints
+│   │   │   ├── deletion.py     # Deletion endpoints
+│   │   │   ├── enrichment.py   # Enrichment endpoints
+│   │   │   ├── health.py       # Health check endpoints
+│   │   │   ├── properties.py   # Property endpoints
+│   │   │   └── sync.py         # Sync endpoints
+│   │   └── dependencies.py  # Shared dependencies
 │   ├── utils/               # Common utilities
 │   │   ├── __init__.py
 │   │   ├── helpers.py          # Helper functions and validators
 │   │   └── json_cache.py       # JSON cache utilities
 │   └── main.py                 # Main FastAPI application
 ├── tests/                   # Test files and SQL schemas
-├── cache/                   # Conversation cache (JSON)
-├── backup/                  # Service backups (unused)
+├── docs/                    # Documentation
+├── backup/                  # Service backups
+├── scripts/                 # Utility scripts
 ├── requirements.txt         # Project dependencies
 ├── run.py                   # Quick start script
 ├── Dockerfile               # Docker configuration
 ├── docker-compose.yml       # Docker Compose configuration
-├── fix_supabase_rls.py      # Supabase RLS policy fix script
-├── test_insert_data.ipynb   # Data insertion notebook (unused)
+├── Makefile                 # Build automation
+├── CONTRIBUTING.md          # Contribution guidelines
+├── QUICK_INSTALLATION.md    # Quick setup guide
 └── README.md               # This file
 ```
 
@@ -206,12 +231,26 @@ python -m src.main
 - `GET /api/cache/info` - Detailed cache information
 - `DELETE /api/cache/clear` - Clear all cache
 
-### Debug Endpoints
-- `GET /api/debug/conversations` - Debug endpoint to check all conversations
+### Synchronization
+- `POST /api/sync/properties/full` - Full synchronization of properties from Supabase to Weaviate
+- `POST /api/sync/properties/incremental` - Incremental synchronization of recent properties
+- `GET /api/sync/properties/status` - Get synchronization status and statistics
+
+### Deletion Operations
+- `DELETE /api/delete/properties/all` - Delete all properties from Weaviate
+- `DELETE /api/delete/properties/by-date` - Delete properties before a specific date
+- `DELETE /api/delete/properties/{zpid}` - Delete a specific property by ID
+- `DELETE /api/delete/properties/bulk` - Bulk delete properties by IDs
+- `GET /api/delete/properties/status` - Get deletion operation status
+
+### Enrichment
+- `POST /api/enrich-pois` - Enrich properties with POIs from OpenStreetMap
+
+> 📖 **For detailed documentation on Synchronization and POI Enrichment endpoints**, see [Sync and Enrichment Endpoints Guide](docs/sync-and-enrichment-endpoints.md)
 
 ## Services and Functionality
 
-The system is built with a **modular architecture** where each service has a single, well-defined responsibility. Services are organized into four main modules:
+The system is built with a **modular architecture** where each service has a single, well-defined responsibility. Services are organized into seven main modules:
 
 ### Chatbot Services (`src/services/chatbot/`)
 
@@ -313,7 +352,7 @@ with WeaviateService() as weaviate:
 **Supabase database operations for conversation persistence and analytics**
 
 ```python
-from src.services.supabase import SearchLogService, SupabaseConversationService
+from src.services.supabase import SearchLogService, SupabaseConversationService, SupabasePropertyService
 
 # Search logging
 search_log_service = SearchLogService()
@@ -322,6 +361,10 @@ search_log_service.log_search("conversation_123", "property_search", {"query": "
 # Conversation management
 conversation_service = SupabaseConversationService()
 conversations = conversation_service.list_conversations(user_id="user_123")
+
+# Property management
+property_service = SupabasePropertyService()
+properties = property_service.get_all_properties(limit=100)
 ```
 
 **Specialized Services:**
@@ -330,6 +373,72 @@ conversations = conversation_service.list_conversations(user_id="user_123")
 - **`ConversationAnalyticsService`**: Conversation analytics and insights
 - **`ConversationCleanupService`**: Cleanup operations for old conversations
 - **`SearchLogService`**: Search logging and analytics
+- **`SupabasePropertyService`**: Property data operations
+
+### OpenStreetMap Services (`src/services/osm/`)
+
+**OpenStreetMap integration for POI enrichment**
+
+```python
+from src.services.osm import OSMService
+
+# Main service for OpenStreetMap operations
+with OSMService() as osm:
+    # Search for POIs near coordinates
+    pois = osm.search_pois_nearby(
+        latitude=25.7617,
+        longitude=-80.1918,
+        radius=1500,
+        category="restaurant"
+    )
+    
+    # Check availability
+    is_available = osm.is_available()
+```
+
+**Specialized Services:**
+- **`OSMService`**: Main orchestrator for OpenStreetMap operations
+- **`OSMConnectionService`**: Connection management
+- **`OSMPOIService`**: POI search and retrieval operations
+
+### Enrichment Services (`src/services/enrichment/`)
+
+**POI enrichment for properties**
+
+```python
+from src.services.enrichment import POIEnrichmentService
+
+# Enrich properties with POIs
+enrichment_service = POIEnrichmentService()
+result = enrichment_service.enrich_properties_with_pois(
+    property_ids=["prop1", "prop2"],
+    categories=["restaurant", "school", "park"],
+    radius=1500
+)
+```
+
+**Specialized Services:**
+- **`POIEnrichmentService`**: Property enrichment with POI data
+
+### Synchronization Services (`src/services/sync/`)
+
+**Data synchronization between Supabase and Weaviate**
+
+```python
+from src.services.sync import PropertySyncService
+
+# Synchronize properties
+sync_service = PropertySyncService()
+
+# Full synchronization
+result = sync_service.sync_all_properties()
+
+# Incremental synchronization
+result = sync_service.sync_incremental(days=7)
+```
+
+**Specialized Services:**
+- **`PropertySyncService`**: Property data synchronization
 
 ## Architecture Benefits
 
@@ -348,8 +457,11 @@ The system follows a **Service-Oriented Architecture** with clear separation of 
 src/services/
 ├── chatbot/          # Chatbot business logic
 ├── openai/           # AI/ML operations
-├── weaviate/         # Data operations
-└── supabase/         # Persistence and analytics
+├── weaviate/         # Vector database operations
+├── supabase/         # Persistence and analytics
+├── osm/              # OpenStreetMap integration
+├── enrichment/       # Data enrichment operations
+└── sync/             # Data synchronization
 ```
 
 Each module contains:
@@ -620,70 +732,31 @@ PORT=8001 uvicorn src.main:app --reload
 lsof -ti:8000 | xargs kill -9
 ```
 
-## Cleanup Recommendations
+## Project Structure
 
-Based on the analysis, the following files and directories are **unused** and can be safely removed:
+### Core Directories
 
-### Unused Files to Remove
+- **`/src/`** - Core application code
+  - `/api/` - API routes and endpoints
+  - `/config/` - Configuration management
+  - `/models/` - Data models (Pydantic)
+  - `/services/` - Business logic services
+  - `/utils/` - Utility functions
+- **`/tests/`** - Test files and SQL schemas
+- **`/docs/`** - Documentation files
+- **`/scripts/`** - Utility scripts
+- **`/backup/`** - Service backups
 
-1. **`/backup/` directory** - Contains old service implementations that are no longer used
-2. **`test_insert_data.ipynb`** - Jupyter notebook for data insertion (not used in production)
-3. **`fix_supabase_rls.py`** - One-time script (can be kept for reference or moved to `/scripts/`)
+### Configuration Files
 
-### Recommended Cleanup
-
-```bash
-# Remove unused files
-rm -rf backup/
-rm test_insert_data.ipynb
-
-# Optional: Move utility scripts to a scripts directory
-mkdir scripts
-mv fix_supabase_rls.py scripts/
-```
-
-### Files to Keep
-
-- All files in `/src/` - Core application code
-- `/tests/` - Test files and SQL schemas
-- `/cache/` - Runtime cache directory
-- `requirements.txt` - Dependencies
-- `run.py` - Startup script
-- `Dockerfile` and `docker-compose.yml` - Containerization
-- `README.md` - Documentation
-
-## Roadmap
-
-### Completed
-- [x] **Comprehensive REST API** - Multiple specialized endpoints
-- [x] **Modular Service Architecture** - Specialized services with dependency injection
-- [x] **Weaviate Integration** - Hybrid search with vector and BM25 capabilities
-- [x] **OpenAI Integration** - Intent detection, embeddings, and response generation
-- [x] **Supabase Integration** - Conversation persistence and analytics
-- [x] **Real-time Chat** - Server-Sent Events (SSE) for streaming responses
-- [x] **Property Search** - Advanced filtering (price, location, features)
-- [x] **POI Integration** - Points of interest search by category and radius
-- [x] **Property Comparison** - AI-powered comparison with pros/cons analysis
-- [x] **Docker Support** - Complete containerization with health checks
-- [x] **Comprehensive Documentation** - Detailed README with examples
-- [x] **Error Handling** - Robust validation and exception management
-- [x] **Structured Logging** - Configurable logging with file output option
-- [x] **Analytics** - Search logging and conversation analytics
-
-### In Progress
-- [ ] **Performance Optimization** - Query optimization and caching improvements
-- [ ] **Enhanced Monitoring** - Detailed metrics and performance tracking
-
-### Coming Soon
-- [ ] **JWT Authentication** - Secure API access with user management
-- [ ] **Rate Limiting** - API protection and usage controls
-- [ ] **Redis Integration** - Advanced caching for improved performance
-- [ ] **WebSocket Support** - Full-duplex real-time communication
-- [ ] **Admin Dashboard** - System management and monitoring interface
-- [ ] **CI/CD Pipeline** - Automated testing and deployment
-- [ ] **Load Testing** - Performance benchmarks and stress testing
-- [ ] **Multi-language Support** - Internationalization capabilities
-- [ ] **Advanced Analytics** - Property market insights and trends
+- **`requirements.txt`** - Python dependencies
+- **`run.py`** - Quick start script
+- **`Dockerfile`** - Docker configuration
+- **`docker-compose.yml`** - Docker Compose configuration
+- **`Makefile`** - Build automation
+- **`.env`** - Environment variables (not in repo)
+- **`.gitignore`** - Git ignore rules
+- **`.dockerignore`** - Docker ignore rules
 
 ## Support
 
@@ -704,15 +777,19 @@ This project is under the MIT License. See the `LICENSE` file for more details.
 
 ## Current Version
 
-**Version 2.1.0** - Comprehensive REST API with Supabase Integration
+**Version 2.0.0** - Modular REST API with Full Integration Suite
 
-### What's New in v2.1.0
-- **Supabase Integration** - Conversation persistence and analytics
-- **Analytics Endpoints** - Search logging and conversation analytics
-- **Enhanced Architecture** - Four main service modules (chatbot, openai, weaviate, supabase)
-- **Better Monitoring** - Comprehensive health checks and analytics
-- **Data Persistence** - Robust conversation and search logging
-- **Code Cleanup** - Identified and documented unused components
+### What's New in v2.0.0
+- **Seven Service Modules** - chatbot, openai, weaviate, supabase, osm, enrichment, sync
+- **OpenStreetMap Integration** - POI enrichment from OSM data
+- **Data Synchronization** - Automated sync between Supabase and Weaviate
+- **Deletion Operations** - Comprehensive data deletion capabilities
+- **POI Enrichment** - Automated property enrichment with nearby POIs
+- **Modular Routing** - Organized API routes by service domain
+- **23+ Endpoints** - Comprehensive API coverage
+- **Enhanced Analytics** - Advanced search logging and conversation analytics
+- **Better Monitoring** - Comprehensive health checks and status endpoints
+- **Code Quality** - All Spanish comments removed, English-only codebase
 
 ---
 
@@ -890,27 +967,6 @@ test(weaviate): add integration tests for search
   - Staging validation complete
   - Code review approved
   - Documentation updated
-
-### Quality Gates
-
-#### Before Merging to Dev:
-- [ ] All tests passing
-- [ ] Code review approved
-- [ ] No merge conflicts
-- [ ] Documentation updated
-- [ ] Performance impact assessed
-
-#### Before Merging to Staging:
-- [ ] Integration tests passing
-- [ ] Security scan clean
-- [ ] Performance benchmarks met
-- [ ] Feature complete
-
-#### Before Merging to Main:
-- [ ] Staging validation complete
-- [ ] Production readiness checklist
-- [ ] Rollback plan documented
-- [ ] Monitoring alerts configured
 
 ### Emergency Procedures
 

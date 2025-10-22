@@ -49,12 +49,12 @@ class TextProcessor:
             if len(word) >= min_length and word.isalpha()
         ]
         
-        # Remover duplicados manteniendo orden
+        # Remove duplicates while maintaining order
         return list(dict.fromkeys(keywords))
     
     @staticmethod
     def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """Trunca texto a una longitud máxima"""
+        """Truncates text to a maximum length"""
         if not text or len(text) <= max_length:
             return text
         
@@ -65,25 +65,25 @@ class DataValidator:
     
     @staticmethod
     def validate_email(email: str) -> bool:
-        """Valida formato de email"""
+        """Validates email format"""
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return bool(re.match(pattern, email))
     
     @staticmethod
     def validate_phone(phone: str) -> bool:
-        """Valida formato de teléfono"""
+        """Validates phone format"""
         pattern = r'^\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$'
         return bool(re.match(pattern, phone))
     
     @staticmethod
     def validate_zipcode(zipcode: str) -> bool:
-        """Valida código postal estadounidense"""
+        """Validates US zipcode"""
         pattern = r'^\d{5}(-\d{4})?$'
         return bool(re.match(pattern, zipcode))
     
     @staticmethod
     def validate_price(price: Union[str, int, float]) -> bool:
-        """Valida precio"""
+        """Validates price"""
         try:
             price_float = float(price)
             return price_float >= 0
@@ -91,16 +91,16 @@ class DataValidator:
             return False
 
 class IDGenerator:
-    """Utilidades para generación de IDs"""
+    """Utilities for ID generation"""
     
     @staticmethod
     def generate_uuid() -> str:
-        """Genera un UUID único"""
+        """Generates a unique UUID"""
         return str(uuid.uuid4())
     
     @staticmethod
     def generate_short_id(length: int = 8) -> str:
-        """Genera un ID corto"""
+        """Generates a short ID"""
         return hashlib.md5(str(uuid.uuid4()).encode()).hexdigest()[:length]
     
     @staticmethod
@@ -143,11 +143,11 @@ class FileHandler:
             return False
 
 class ResponseBuilder:
-    """Utilidades para construir respuestas"""
+    """Utilities for building responses"""
     
     @staticmethod
     def success_response(data: Any = None, message: str = "Success") -> Dict[str, Any]:
-        """Construye una respuesta de éxito"""
+        """Builds a success response"""
         response = {
             "success": True,
             "message": message,
@@ -159,7 +159,7 @@ class ResponseBuilder:
     
     @staticmethod
     def error_response(message: str, error_code: str = "ERROR", details: Any = None) -> Dict[str, Any]:
-        """Construye una respuesta de error"""
+        """Builds an error response"""
         response = {
             "success": False,
             "error": {
@@ -179,7 +179,7 @@ class ResponseBuilder:
         page: int = 1, 
         per_page: int = 10
     ) -> Dict[str, Any]:
-        """Construye una respuesta paginada"""
+        """Builds a paginated response"""
         total_pages = (total + per_page - 1) // per_page
         
         return {
@@ -197,39 +197,39 @@ class ResponseBuilder:
         }
 
 class ConfigHelper:
-    """Utilidades para configuración"""
+    """Utilities for configuration"""
     
     @staticmethod
     def get_env_var(key: str, default: Any = None, required: bool = False) -> Any:
-        """Obtiene una variable de entorno con validación"""
+        """Gets an environment variable with validation"""
         value = os.getenv(key, default)
         
         if required and value is None:
-            raise ValueError(f"Variable de entorno requerida no encontrada: {key}")
+            raise ValueError(f"Required environment variable not found: {key}")
         
         return value
     
     @staticmethod
     def get_bool_env(key: str, default: bool = False) -> bool:
-        """Obtiene una variable de entorno como booleano"""
+        """Gets an environment variable as boolean"""
         value = os.getenv(key, str(default)).lower()
         return value in ('true', '1', 'yes', 'on')
     
     @staticmethod
     def get_int_env(key: str, default: int = 0) -> int:
-        """Obtiene una variable de entorno como entero"""
+        """Gets an environment variable as integer"""
         try:
             return int(os.getenv(key, str(default)))
         except ValueError:
-            logger.warning(f"Variable de entorno {key} no es un entero válido, usando default: {default}")
+            logger.warning(f"Environment variable {key} is not a valid integer, using default: {default}")
             return default
 
 class LoggerHelper:
-    """Utilidades para logging"""
+    """Utilities for logging"""
     
     @staticmethod
     def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
-        """Configura un logger"""
+        """Configures a logger"""
         logger = logging.getLogger(name)
         logger.setLevel(getattr(logging, level.upper(), logging.INFO))
         
@@ -245,24 +245,24 @@ class LoggerHelper:
     
     @staticmethod
     def log_function_call(func_name: str, args: Dict[str, Any] = None, result: Any = None):
-        """Log de llamadas a funciones"""
-        logger.debug(f"Función {func_name} llamada con args: {args}")
+        """Logs function calls"""
+        logger.debug(f"Function {func_name} called with args: {args}")
         if result is not None:
-            logger.debug(f"Función {func_name} retornó: {result}")
+            logger.debug(f"Function {func_name} returned: {result}")
 
-# Funciones de utilidad específicas para el chatbot
+# Chatbot-specific utility functions
 def clean_text(text: str) -> str:
-    """Limpia y normaliza texto"""
+    """Cleans and normalizes text"""
     return TextProcessor.clean_text(text)
 
 def format_price(price: float) -> str:
-    """Formatea un precio de manera legible"""
+    """Formats a price in a readable way"""
     if price is None:
         return "N/A"
     return f"${price:,.0f}"
 
 def format_property_summary(property_data: Dict[str, Any]) -> str:
-    """Crea un resumen legible de una propiedad"""
+    """Creates a readable property summary"""
     try:
         address = property_data.get('address', 'N/A')
         city = property_data.get('city', 'N/A')
@@ -274,7 +274,7 @@ def format_property_summary(property_data: Dict[str, Any]) -> str:
         property_type = property_data.get('property_type', 'N/A')
         
         summary = f"{address}, {city}, {state} - {price}"
-        summary += f"\n{property_type} | {bedrooms} hab, {bathrooms} baños"
+        summary += f"\n{property_type} | {bedrooms} bed, {bathrooms} bath"
         
         if living_area and living_area != 'N/A':
             summary += f" | {living_area:,.0f} sqft"
@@ -282,19 +282,19 @@ def format_property_summary(property_data: Dict[str, Any]) -> str:
         return summary
         
     except Exception as e:
-        logger.error(f"Error formateando resumen de propiedad: {e}")
-        return "Información no disponible"
+        logger.error(f"Error formatting property summary: {e}")
+        return "Information not available"
 
 def extract_location_keywords(text: str) -> List[str]:
-    """Extrae palabras clave relacionadas con ubicación"""
+    """Extracts location-related keywords"""
     location_keywords = []
     
-    # Patrones comunes de ubicación
+    # Common location patterns
     patterns = [
         r'\b[A-Z][a-z]+\s+City\b',  # "Crescent City"
-        r'\b[A-Z]{2}\b',  # Estados como "CA", "IL"
-        r'\b\d{5}\b',  # Códigos postales
-        r'\b[A-Z][a-z]+\b'  # Nombres de ciudades
+        r'\b[A-Z]{2}\b',  # States like "CA", "IL"
+        r'\b\d{5}\b',  # Zipcodes
+        r'\b[A-Z][a-z]+\b'  # City names
     ]
     
     for pattern in patterns:
@@ -304,39 +304,39 @@ def extract_location_keywords(text: str) -> List[str]:
     return list(set(location_keywords))
 
 def validate_search_query(query: str) -> bool:
-    """Valida si una consulta de búsqueda es válida"""
+    """Validates if a search query is valid"""
     if not query or len(query.strip()) < 2:
         return False
     
-    # Verificar que no sea solo caracteres especiales
+    # Verify it's not only special characters
     if not re.search(r'[a-zA-Z0-9]', query):
         return False
     
     return True
 
 def create_search_filters(search_intent: Dict[str, Any]) -> Dict[str, Any]:
-    """Crea filtros de búsqueda basados en la intención extraída"""
+    """Creates search filters based on extracted intent"""
     filters = {}
     
-    # Filtro por tipo de propiedad
+    # Filter by property type
     if search_intent.get('property_type'):
         filters['property_type'] = search_intent['property_type']
     
-    # Filtro por ciudad
+    # Filter by city
     if search_intent.get('location'):
         filters['city'] = search_intent['location']
     
-    # Filtro por número de habitaciones
+    # Filter by number of bedrooms
     if search_intent.get('bedrooms'):
         filters['bedrooms'] = search_intent['bedrooms']
     
-    # Filtro por número de baños
+    # Filter by number of bathrooms
     if search_intent.get('bathrooms'):
         filters['bathrooms'] = search_intent['bathrooms']
     
     return filters
 
-# Instancias globales para uso fácil
+# Global instances for easy use
 text_processor = TextProcessor()
 data_validator = DataValidator()
 id_generator = IDGenerator()
