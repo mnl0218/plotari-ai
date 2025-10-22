@@ -1,6 +1,6 @@
 """
-Módulo de servicios del chatbot
-Contiene todos los servicios especializados para el funcionamiento del chatbot
+Chatbot services module
+Contains all specialized services for chatbot functionality
 """
 
 from .chatbot_service import ChatbotService
@@ -20,7 +20,7 @@ from .conversation_manager_service import ConversationManagerService
 from .cache_manager_service import CacheManagerService
 
 __all__ = [
-    # Servicio principal
+    # Main service
     'ChatbotService',
     
     # Interfaces
@@ -31,7 +31,7 @@ __all__ = [
     'ConversationManagerInterface',
     'CacheManagerInterface',
     
-    # Servicios especializados
+    # Specialized services
     'IntentExtractorService',
     'PropertySearchService',
     'POISearchService',
