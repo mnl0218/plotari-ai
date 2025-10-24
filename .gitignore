@@ -110,7 +110,6 @@ dmypy.json
 *.model
 *.weights
 data/
-models/
 checkpoints/
 
 # Backup files
