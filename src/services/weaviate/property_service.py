@@ -38,10 +38,11 @@ class WeaviatePropertyService(WeaviatePropertyInterface):
                 query=property_id,
                 limit=1,
                 return_properties=[
-                    "zpid", "address", "city", "state", "zipcode",
+                    "property_id", "zpid", "address", "city", "state", "zipcode",
                     "price", "bedrooms", "bathrooms", "living_area", 
-                    "year_built", "lot_size", "description", "features",
-                    "neighborhood_text", "property_type", "geo", "search_corpus"
+                    "year_built", "lot_size", "description",
+                    "neighborhood_text", "property_type", "geo", "search_corpus",
+                    "listing_id", "listing_type"
                 ]
             )
             
@@ -93,10 +94,11 @@ class WeaviatePropertyService(WeaviatePropertyInterface):
                 limit=limit,
                 filters=Filter.by_property("zpid").not_equal(property_obj.zpid),
                 return_properties=[
-                    "zpid", "address", "city", "state", "zipcode",
+                    "property_id", "zpid", "address", "city", "state", "zipcode",
                     "price", "bedrooms", "bathrooms", "living_area", 
-                    "year_built", "lot_size", "description", "features",
-                    "neighborhood_text", "property_type", "geo", "search_corpus"
+                    "year_built", "lot_size", "description",
+                    "neighborhood_text", "property_type", "geo", "search_corpus",
+                    "listing_id", "listing_type"
                 ]
             )
             

@@ -235,25 +235,27 @@ class PropertySyncService:
             
             # Prepare property data for Weaviate
             property_data = {
+                "property_id": property_obj.property_id,
                 "zpid": property_obj.zpid,
                 "address": property_obj.address,
                 "city": property_obj.city,
                 "state": property_obj.state,
                 "zipcode": property_obj.zipcode,
-                "price": property_obj.price,
-                "bedrooms": property_obj.bedrooms,
-                "bathrooms": property_obj.bathrooms,
-                "living_area": property_obj.living_area,
-                "year_built": property_obj.year_built,
-                "lot_size": property_obj.lot_size, 
-                "description": property_obj.description,
-                "features": property_obj.features or [],
-                "neighborhood_text": property_obj.neighborhood_text, 
+                "neighborhood_text": property_obj.neighborhood_text,
                 "property_type": property_obj.property_type,
                 "geo": {
                     "latitude": property_obj.geo.latitude,
                     "longitude": property_obj.geo.longitude
                 } if property_obj.geo else None,
+                "year_built": property_obj.year_built,
+                "lot_size": property_obj.lot_size,
+                "listing_id": property_obj.listing_id,
+                "price": property_obj.price,
+                "bedrooms": property_obj.bedrooms,
+                "bathrooms": property_obj.bathrooms,
+                "living_area": property_obj.living_area,
+                "listing_type": property_obj.listing_type,
+                "description": property_obj.description,
                 "search_corpus": property_obj.search_corpus
             }
             

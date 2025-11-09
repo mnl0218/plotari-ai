@@ -26,7 +26,7 @@ class SupabasePropertyService:
     
     def get_all_properties(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
         """
-        Gets all properties from Supabase with latest price from price_history
+        Gets all properties from Supabase including their latest listing data
         
         Args:
             limit: Maximum number of properties to return
@@ -36,32 +36,23 @@ class SupabasePropertyService:
             List of property dictionaries
         """
         try:
-            # Select properties with price_history ordered by created_at desc and limited to 1
+            # Select properties with related listing data
             query = self.supabase.table("properties").select(
-                "*, price_history(price, event_date)"
-            ).order(
-                "event_date", desc=True, foreign_table="price_history"
-            ).limit(1, foreign_table="price_history")
-            
-            if offset > 0:
-                query = query.range(offset, offset + (limit or 1000) - 1)
-            elif limit:
-                query = query.limit(limit)
-            
+                "id, zpid, address, city, state, zipcode, neighborhood, property_type, latitude, longitude, year_built, lot_size_sqft, listings(id, price, bedrooms, bathrooms, living_area, listing_type, description)"
+            )
+
+            if limit is not None:
+                start = offset
+                end = offset + limit - 1
+                query = query.range(start, end)
+            elif offset > 0:
+                start = offset
+                end = offset + 999
+                query = query.range(start, end)
+
             response = query.execute()
-            
-            # Process the response to extract price from price_history
-            properties = []
-            
-            for item in response.data:
-                # Extract price from price_history (already ordered and limited to 1)
-                price_history = item.get('price_history', [])
-                item['price'] = price_history[0].get('price') if price_history else None
-                item.pop('price_history', None)
-                properties.append(item)
-                
-            
-            return properties
+
+            return response.data or []
             
         except Exception as e:
             logger.error(f"Error getting properties from Supabase: {e}")
@@ -69,7 +60,7 @@ class SupabasePropertyService:
     
     def get_property_by_id(self, property_id: str) -> Optional[Dict[str, Any]]:
         """
-        Gets a specific property by ID with latest price from price_history
+        Gets a specific property by ID along with its latest listing data
         
         Args:
             property_id: Property ID to search for
@@ -78,28 +69,14 @@ class SupabasePropertyService:
             Property dictionary or None if not found
         """
         try:
-            # Get property with latest price from price_history ordered by created_at desc
             response = self.supabase.table("properties").select(
-                "*, price_history(price, event_date)"
-            ).eq("id", property_id).order(
-                "event_date", desc=True, foreign_table="price_history"
-            ).limit(1, foreign_table="price_history").execute()
-            
+                "id, zpid, address, city, state, zipcode, neighborhood, property_type, latitude, longitude, year_built, lot_size_sqft, listings(id, price, bedrooms, bathrooms, living_area, listing_type, description)"
+            ).eq("id", property_id).execute()
+
             logger.info(f"Supabase response for property {property_id}: {response.data}")
-            
+
             if response.data and len(response.data) > 0:
-                property_data = response.data[0]
-                
-                logger.info(f"Property data before extraction: zpid={property_data.get('zpid')}, price_history={property_data.get('price_history')}")
-                
-                # Extract price from price_history (already ordered and limited to 1)
-                price_history = property_data.get('price_history', [])
-                property_data['price'] = price_history[0].get('price') if price_history else None
-                property_data.pop('price_history', None)
-                
-                logger.info(f"Property data after extraction: zpid={property_data.get('zpid')}, price={property_data.get('price')}")
-                
-                return property_data
+                return response.data[0]
             return None
                 
         except Exception as e:
@@ -108,7 +85,7 @@ class SupabasePropertyService:
     
     def get_properties_updated_since(self, since: datetime) -> List[Dict[str, Any]]:
         """
-        Gets properties updated since a specific datetime with latest price from price_history
+        Gets properties updated since a specific datetime, including listing data
         
         Args:
             since: Datetime to filter by
@@ -117,23 +94,11 @@ class SupabasePropertyService:
             List of property dictionaries
         """
         try:
-            # Select properties with latest price from price_history ordered by created_at desc
             response = self.supabase.table("properties").select(
-                "*, price_history(price, event_date)"
-            ).gte("created_at", since.isoformat()).order(
-                "event_date", desc=True, foreign_table="price_history"
-            ).limit(1, foreign_table="price_history").execute()
-            
-            # Process each property to extract price from price_history
-            properties = []
-            for property_data in response.data:
-                # Extract price from price_history (already ordered and limited to 1)
-                price_history = property_data.get('price_history', [])
-                property_data['price'] = price_history[0].get('price') if price_history else None
-                property_data.pop('price_history', None)
-                properties.append(property_data)
-            
-            return properties
+                "id, zpid, address, city, state, zipcode, neighborhood, property_type, latitude, longitude, year_built, lot_size_sqft, listings(id, price, bedrooms, bathrooms, living_area, listing_type, description)"
+            ).gte("created_at", since.isoformat()).execute()
+
+            return response.data or []
             
         except Exception as e:
             logger.error(f"Error getting properties updated since {since}: {e}")
@@ -165,32 +130,46 @@ class SupabasePropertyService:
             Property model instance
         """
         try:
-            # Map Supabase fields to Property model
+            property_id = supabase_property.get("id")
+            if property_id is None:
+                raise ValueError("Supabase property record is missing 'id'")
+
+            listings = supabase_property.get("listings")
+            listing_record: Optional[Dict[str, Any]] = None
+            if isinstance(listings, list) and listings:
+                listing_record = listings[0]
+            elif isinstance(listings, dict):
+                listing_record = listings
+
+            zpid_value = supabase_property.get("zpid") or property_id
+
             property_data = {
-                "zpid": str(supabase_property.get("zpid", "")),  # Assuming id maps to zpid
-                "address": supabase_property.get("address", ""),
-                "city": supabase_property.get("city", ""),
-                "state": supabase_property.get("state", ""),
-                "zipcode": supabase_property.get("zipcode", ""),
-                "price": supabase_property.get("price"),
-                "bedrooms": supabase_property.get("bedrooms"),
-                "bathrooms": supabase_property.get("bathrooms"),
-                "living_area": supabase_property.get("living_area"),
+                "zpid": str(zpid_value),
+                "property_id": int(property_id),
+                "address": supabase_property.get("address") or "",
+                "city": supabase_property.get("city") or "",
+                "state": (supabase_property.get("state") or "").strip(),
+                "zipcode": str(supabase_property.get("zipcode") or ""),
                 "year_built": supabase_property.get("year_built"),
                 "lot_size": supabase_property.get("lot_size_sqft"),
-                "description": supabase_property.get("description"),
-                "features": supabase_property.get("features", []),
                 "neighborhood_text": supabase_property.get("neighborhood"),
                 "property_type": supabase_property.get("property_type"),
+                "price": listing_record.get("price") if listing_record else None,
+                "bedrooms": listing_record.get("bedrooms") if listing_record else None,
+                "bathrooms": listing_record.get("bathrooms") if listing_record else None,
+                "living_area": listing_record.get("living_area") if listing_record else None,
+                "description": listing_record.get("description") if listing_record else None,
+                "listing_id": int(listing_record.get("id")) if listing_record and listing_record.get("id") is not None else None,
+                "listing_type": listing_record.get("listing_type") if listing_record else None,
             }
-            
+
             # Handle geo coordinates
             if supabase_property.get("latitude") and supabase_property.get("longitude"):
                 property_data["geo"] = GeoCoordinate(
                     latitude=float(supabase_property["latitude"]),
                     longitude=float(supabase_property["longitude"])
                 )
-            
+             
             # Generate search corpus for vectorization
             search_corpus_parts = []
             if property_data["address"]:
@@ -201,8 +180,6 @@ class SupabasePropertyService:
                 search_corpus_parts.append(property_data["state"])
             if property_data["description"]:
                 search_corpus_parts.append(property_data["description"])
-            if property_data["features"]:
-                search_corpus_parts.extend(property_data["features"])
             if property_data["neighborhood_text"]:
                 search_corpus_parts.append(property_data["neighborhood_text"])
             if property_data["property_type"]:

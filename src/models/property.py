@@ -36,6 +36,7 @@ class Property(BaseModel):
     city: str = Field(..., max_length=100, description="City")
     state: str = Field(..., max_length=50, description="State")
     zipcode: str = Field(..., max_length=10, description="ZIP code")
+    property_id: int = Field(..., description="Internal property table ID")
     price: Optional[float] = Field(None, ge=0, description="Property price")
     bedrooms: Optional[float] = Field(None, ge=0, le=20, description="Number of bedrooms")
     bathrooms: Optional[float] = Field(None, ge=0, le=20, description="Number of bathrooms")
@@ -43,11 +44,12 @@ class Property(BaseModel):
     year_built: Optional[float] = Field(None, ge=1800, le=2030, description="Year built")
     lot_size: Optional[float] = Field(None, ge=0, description="Lot size in square feet")
     description: Optional[str] = Field(None, max_length=5000, description="Property description")
-    features: Optional[List[str]] = Field(None, description="Property features")
     neighborhood_text: Optional[str] = Field(None, max_length=200, description="Neighborhood")
     geo: GeoCoordinate = Field(..., description="Geographic location")
     search_corpus: Optional[str] = Field(None, max_length=2000, description="Search corpus")
     property_type: Optional[str] = Field(None, max_length=100, description="Property type")
+    listing_id: Optional[int] = Field(None, description="Internal listing table ID")
+    listing_type: Optional[str] = Field(None, max_length=100, description="Listing type")
     
     @validator('zpid')
     def validate_zpid(cls, v):
