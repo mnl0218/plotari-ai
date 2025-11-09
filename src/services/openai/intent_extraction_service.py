@@ -117,7 +117,8 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         - For POIs: detect when searching for restaurants, schools, hospitals, etc.
         
         CRITICAL RULES FOR PROPERTY SEARCHES NEAR POIs:
-        - If user searches for "propiedades cerca de X" or "property near X", use type: "property_search" with search_mode: "near_pois"
+        - Before using POI logic, determine if the referenced place is a known city, state, or neighborhood. If it is a geographic location without a POI type (park, school, hospital, etc.), treat it as a location search (set city/state/neighborhood) and do NOT set search_mode "near_pois".
+        - If user searches for "propiedades cerca de X" or "property near X" and X is a POI category or landmark type (park, school, hospital, airport, university, mall, etc.), use type: "property_search" with search_mode: "near_pois" and set the appropriate poi_category when mentioned.
         - If user searches for "what POIs are near property Y?", use type: "poi_search"
         - For property searches near POIs, include "search_mode": "near_pois" in filters
         
@@ -153,6 +154,9 @@ class OpenAIIntentExtractionService(OpenAIIntentExtractionInterface):
         
         User: "property near to parks" or "propiedades cerca de parques"
         Response: {"type": "property_search", "query": "property near parks", "filters": {"poi_category": "park", "poi_radius": 1500, "search_mode": "near_pois"}}
+        
+        User: "I need properties near Evanston"
+        Response: {"type": "property_search", "query": "properties near Evanston", "filters": {"city": "Evanston"}}
         
         User: "Compare properties 18562768 and 18562769"
         Response: {"type": "property_compare", "query": "compare properties", "filters": {"property_ids": ["18562768", "18562769"]}}

@@ -148,10 +148,11 @@ class WeaviateSearchService(WeaviateSearchInterface):
             limit=search_request.limit,
             filters=filters,
             return_properties=[
-                "zpid", "address", "city", "state", "zipcode",
+                "property_id", "zpid", "address", "city", "state", "zipcode",
                 "price", "bedrooms", "bathrooms", "living_area", 
-                "year_built", "lot_size", "description", "features",
-                "neighborhood_text", "property_type", "geo", "search_corpus"
+                "year_built", "lot_size", "description",
+                "neighborhood_text", "property_type", "geo", "search_corpus",
+                "listing_id", "listing_type"
             ]
         )
     
@@ -163,10 +164,11 @@ class WeaviateSearchService(WeaviateSearchInterface):
             limit=search_request.limit,
             filters=filters,
             return_properties=[
-                "zpid", "address", "city", "state", "zipcode",
+                "property_id", "zpid", "address", "city", "state", "zipcode",
                 "price", "bedrooms", "bathrooms", "living_area", 
-                "year_built", "lot_size", "description", "features",
-                "neighborhood_text", "property_type", "geo", "search_corpus"
+                "year_built", "lot_size", "description",
+                "neighborhood_text", "property_type", "geo", "search_corpus",
+                "listing_id", "listing_type"
             ]
         )
     
@@ -177,10 +179,11 @@ class WeaviateSearchService(WeaviateSearchInterface):
             limit=search_request.limit,
             filters=filters,
             return_properties=[
-                "zpid", "address", "city", "state", "zipcode",
+                "property_id", "zpid", "address", "city", "state", "zipcode",
                 "price", "bedrooms", "bathrooms", "living_area", 
-                "year_built", "lot_size", "description", "features",
-                "neighborhood_text", "property_type", "geo", "search_corpus"
+                "year_built", "lot_size", "description",
+                "neighborhood_text", "property_type", "geo", "search_corpus",
+                "listing_id", "listing_type"
             ]
         )
     
